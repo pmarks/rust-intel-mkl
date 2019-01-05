@@ -12,10 +12,12 @@ readme = "README.md"
 build = "build.rs"
 links = "mkl_intel_lp64"
 
-exclude = ["mkl_lib/mkl.tar.xz"]
-
 [build-dependencies]
 rust-crypto = "0.2"
+curl = "*"
+bzip2 = "0.3.3"
+tar = "*"
 
 [dev-dependencies]
 libc = "0.2"
+
