@@ -37,28 +37,41 @@ use std::path::*;
 use std::fs::{self, File};
 use std::io::*;
 
+
+// Use `conda search --json --platform 'win-64' mkl-static`
+// to query the metadata of conda package (includes MD5 sum).
+
 #[cfg(target_os = "linux")]
 mod mkl {
-    pub const ARCHIVE: &'static str = "mkl_linux.tar.xz";
-    pub const MD5SUM: &'static str = "9c6c0d8609ffb94af492d0c07fb7f22c";
-    pub const URI: &'static str = "https://anaconda.org/anaconda/mkl/2019.1/download/linux-64/mkl-2019.1-144.tar.bz2";
-    pub const SO_PATH: &'static str = "lib";
+    pub const LIB_PATH: &'static str = "lib";
+
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
+        ("mkl-static-2019.1-intel_144.tar.bz2", 
+         "https://conda.anaconda.org/intel/linux-64/mkl-static-2019.1-intel_144.tar.bz2",
+         "37e3a60ff2643cf40b5cf9d2c183588c")
+    ];
 }
 
 #[cfg(target_os = "macos")]
 mod mkl {
-    pub const ARCHIVE: &'static str = "mkl_osx.tar.xz";
-    pub const MD5SUM: &'static str = "c9598d7fb664a16f0abfc2cb71491b62";
-    pub const URI: &'static str = "https://anaconda.org/anaconda/mkl/2019.1/download/osx-64/mkl-2019.1-144.tar.bz2";
-    pub const SO_PATH: &'static str = "lib";
+    pub const LIB_PATH: &'static str = "lib";
+
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
+        ("mkl-static-2019.1-intel_144.tar.bz2", 
+         "https://conda.anaconda.org/intel/osx-64/mkl-static-2019.1-intel_144.tar.bz2", 
+         "74a186a5e325146c7de7e1e1c8fc3bc3")
+    ];
 }
 
 #[cfg(target_os = "windows")]
 mod mkl {
-    pub const ARCHIVE: &'static str = "mkl_win.tar.xz";
-    pub const MD5SUM: &'static str = "429418273137ee591a55a0a210cf7436";
-    pub const URI: &'static str = "https://anaconda.org/anaconda/mkl/2019.1/download/win-64/mkl-2019.1-144.tar.bz2";
-    pub const SO_PATH: &'static str = "Library/bin";
+    pub const LIB_PATH: &'static str = "lib";
+
+    pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
+        ("mkl-static-2019.1-intel_144.tar.bz2", 
+         "https://conda.anaconda.org/intel/win-64/mkl-static-2019.1-intel_144.tar.bz2", 
+         "0b65a55b6bcda83392e9defff8e1edbe")
+    ];
 }
 
 fn download(uri: &str, filename: &str, out_dir: &Path) {
@@ -100,26 +113,28 @@ fn extract<P: AsRef<Path>, P2: AsRef<Path>>(archive_path: P, extract_to: P2) {
 
 fn main() {
     let out_dir = PathBuf::from(var("OUT_DIR").unwrap());
-    let archive_path = out_dir.join(mkl::ARCHIVE);
 
-    if archive_path.exists() && calc_md5(&archive_path) == mkl::MD5SUM {
-        println!("Use existings archive");
-    } else {
-        println!("Download archive");
-        download(mkl::URI, mkl::ARCHIVE, &out_dir);
-        extract(&archive_path, &out_dir);
-        let sum = calc_md5(&archive_path);
-        if sum != mkl::MD5SUM {
-            panic!(
-                "check sum of downloaded archive is incorrect: md5sum={}",
-                sum
-            );
+    for (archive, uri, md5) in mkl::DLS {
+        let archive_path = out_dir.join(archive);
+        if archive_path.exists() && calc_md5(&archive_path) == *md5 {
+            println!("Use existings archive");
+        } else {
+            println!("Download archive");
+            download(uri, archive, &out_dir);
+            extract(&archive_path, &out_dir);
+            
+            let sum = calc_md5(&archive_path);
+            if sum != *md5 {
+                panic!(
+                    "check sum of downloaded archive is incorrect: md5sum={}",
+                    sum
+                );
+            }
         }
     }
     
-    println!("cargo:rustc-link-search={}", out_dir.join(mkl::SO_PATH).display());
-    println!("cargo:rustc-link-lib=mkl_intel_lp64");
-    println!("cargo:rustc-link-lib=mkl_sequential");
-    println!("cargo:rustc-link-lib=mkl_core");
-    println!("cargo:rustc-link-lib=m");
+    println!("cargo:rustc-link-search={}", out_dir.join(mkl::LIB_PATH).display());
+    println!("cargo:rustc-link-lib=static=mkl_intel_lp64");
+    println!("cargo:rustc-link-lib=static=mkl_sequential");
+    println!("cargo:rustc-link-lib=static=mkl_core");
 }
