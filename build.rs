@@ -65,7 +65,7 @@ mod mkl {
 
 #[cfg(target_os = "windows")]
 mod mkl {
-    pub const LIB_PATH: &'static str = "lib";
+    pub const LIB_PATH: &'static str = "Library\\lib";
 
     pub const DLS: &[(&'static str, &'static str, &'static str)] = &[
         ("mkl-static-2019.1-intel_144.tar.bz2", 
