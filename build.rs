@@ -83,6 +83,7 @@ fn download(uri: &str, filename: &str, out_dir: &Path) {
     let mut writer = BufWriter::new(f);
     let mut easy = Easy::new();
     easy.follow_location(true).unwrap();
+    easy.autoreferer(true).unwrap();
     easy.url(&uri).unwrap();
     easy.write_function(move |data| {
         Ok(writer.write(data).unwrap())
@@ -134,7 +135,11 @@ fn main() {
     }
     
     println!("cargo:rustc-link-search={}", out_dir.join(mkl::LIB_PATH).display());
-    println!("cargo:rustc-link-lib=static=mkl_intel_lp64");
+
+    // mkl_intel_ilp64 links to a version w/ 64-bit ints,
+    // mkl_intel_lp64 links to a version w/ 32-bit ints.
+    // we need to use ilp64 so that we can support sparse arrays with > 2^31 non-zero entries
+    println!("cargo:rustc-link-lib=static=mkl_intel_ilp64");
     println!("cargo:rustc-link-lib=static=mkl_sequential");
     println!("cargo:rustc-link-lib=static=mkl_core");
 }
