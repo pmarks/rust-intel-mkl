@@ -138,8 +138,8 @@ fn main() {
 
     // mkl_intel_ilp64 links to a version w/ 64-bit ints,
     // mkl_intel_lp64 links to a version w/ 32-bit ints.
-    // we need to use ilp64 so that we can support sparse arrays with > 2^31 non-zero entries
-    println!("cargo:rustc-link-lib=static=mkl_intel_ilp64");
+    // existing binding need lp64
+    println!("cargo:rustc-link-lib=static=mkl_intel_lp64");
     println!("cargo:rustc-link-lib=static=mkl_sequential");
     println!("cargo:rustc-link-lib=static=mkl_core");
 }
