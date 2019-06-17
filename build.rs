@@ -20,13 +20,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-extern crate crypto;
+extern crate md5;
 extern crate curl;
 extern crate bzip2;
 extern crate tar;
-
-use crypto::md5;
-use crypto::digest::Digest;
 
 use curl::easy::Easy;
 use bzip2::read::BzDecoder;
@@ -97,12 +94,12 @@ fn download(uri: &str, filename: &str, out_dir: &Path) {
 }
 
 fn calc_md5(path: &Path) -> String {
-    let mut sum = md5::Md5::new();
     let mut f = BufReader::new(fs::File::open(path).unwrap());
     let mut buf = Vec::new();
     f.read_to_end(&mut buf).unwrap();
-    sum.input(&buf);
-    sum.result_str()
+
+    let digest = md5::compute(&buf);
+    format!("{:x}", digest)
 }
 
 fn extract<P: AsRef<Path>, P2: AsRef<Path>>(archive_path: P, extract_to: P2) {
